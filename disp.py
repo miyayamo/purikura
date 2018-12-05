@@ -98,71 +98,69 @@ def menu():
     cv2.waitKey(30)
 
 def anime():
-    global background, foreground, frame#メニュー2のアニメーションがうまくいかない
-    dirpath = "anime/anime1_"
-    dirpath2 = "anime/anime2_"
+    global background, foreground, frame
     if (disp_conf[0] == "0"):
         ret, frame = cap.read()
         frame = cv2.flip(frame, 1)
     elif(disp_conf[0] == "1"):
         menu1()
-        foreground = cv2.imread('img/button1.png')
+        foreground = cv2.imread('img/button1.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 880, 570)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "2"):
         menu2()
-        foreground = cv2.imread('img/button2.png')
+        foreground = cv2.imread('img/button2.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 190, 570)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "3"):
         menu2()
-        foreground = cv2.imread('img/button3.png')
+        foreground = cv2.imread('img/button3.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 880, 570)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "4"):
         menu2()
-        foreground = cv2.imread('img/button4.png')
+        foreground = cv2.imread('img/button4.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 190, 300)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "5"):
         menu2()
-        foreground = cv2.imread('img/button5.png')
+        foreground = cv2.imread('img/button5.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 960, 300)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "6"):
         menu3()
-        foreground = cv2.imread('img/button6.png')
+        foreground = cv2.imread('img/button6.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 190, 570)
         frame = background
         cv2.imshow("webcam", frame)
         cv2.waitKey(30)
     elif(disp_conf[0] == "7"):
         menu3()
-        foreground = cv2.imread('img/button7.png')
+        foreground = cv2.imread('img/button7.png', -1)
         cond_p = (foreground[..., 0] <= 100) & (foreground[..., 1] <= 100) & (foreground[..., 2] <= 100)
-        foreground[cond_p] = [150, 150, 150]
+        foreground[cond_p] = [150, 150, 150, 0]
         add(foreground, background, 880, 570)
         frame = background
         cv2.imshow("webcam", frame)
@@ -208,7 +206,7 @@ def ifshutter():
         time.sleep(0.05)
         readconf()
         try:
-            if (disp_conf[1] == "1" and shutterflag == 1):
+            if (disp_conf[1] == "1" and disp_conf[0] == "q1" and shutterflag == 1):
                 shutterflag = 0
                 th2 = threading.Thread(target=shutter)
                 th2.start()
