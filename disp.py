@@ -2,7 +2,7 @@
 #python -m pip install opencv-contrib-python
 #python -m pip install -U pygame --user
 #python -m pip install mysql-connector-python
-import cv2, sys, datetime, msvcrt, time, pygame, threading, numpy as np
+import cv2, sys, datetime, msvcrt, time, pygame, threading, subprocess, numpy as np
 import mask
 from PIL import Image
 if(cv2.VideoCapture(0).isOpened() is True):
@@ -20,6 +20,9 @@ if (cap.isOpened() is False):
     print("can not open camera")
     sys.exit()
 
+def img_print(path):
+    subprocess.run("mspaint {} /p".format(path))
+
 def add_alpha(data):
     rgba = cv2.cvtColor(data, cv2.COLOR_RGB2RGBA)
     return rgba
@@ -36,6 +39,23 @@ def add(fg, bg, x, y):
     bg[y:height + y, x:width + x] = fg
     background = bg
 
+def add2(bg):
+    global background
+    time.sleep(0.5)#帰れた！！！！
+    img1 = cv2.imread("bg{}.png".format(str(bg).zfill(2)), -1)
+    img2 = cv2.imread("out.png", -1)
+    print("bg{}.png".format(str(bg).zfill(2)))
+
+    amask = img2[:,:,3]
+    amask_inv = cv2.bitwise_not(amask)
+
+    img1_bg = cv2.bitwise_and(img1,img1,mask = amask_inv)
+    img2_fg = cv2.bitwise_and(img2,img2,mask = amask)
+
+    background = cv2.add(img1_bg,img2_fg)
+    background = add_alpha(background)
+    cv2.imwrite("masked.png", background)
+
 def confedit(text):
     f = open("disp.conf", "w")
     f.write(text)
@@ -43,7 +63,7 @@ def confedit(text):
 
 def scenesetup():
     global frame
-    confedit("q1,0,")
+    confedit("q1,1,0,")
     ret, frame = cap.read()#反転させるには「cv2.flip(img, 1)」
     frame = cv2.flip(frame, 1)
 
@@ -56,10 +76,19 @@ def menu1():
     add(foreground, background, 880, 570)
     frame = background
 
+addflag = False
+addbg = 1
 def menu2():
-    global background, foreground, frame, gbimg
-
-    background = gbimg
+    global background, foreground, frame, addflag, addbg
+    if(disp_conf[2] != "0"):
+        addbg = addbg + int(disp_conf[2])
+        addflag = False
+    confedit("q2,0,0,")
+    if(addflag == False):
+        add2(addbg)
+        addflag = True
+    else:
+        background = cv2.imread("masked.png", -1)
 
     foreground = cv2.imread('img/button2.png', -1)#30,570 230x690
     add(foreground, background, 190, 570)
@@ -179,8 +208,7 @@ def flash():
     cv2.imshow("webcam", frame)
 
 def shutter():
-    global shutterflag, frame, gbimg
-    gbimg = frame
+    global shutterflag, frame
     pygame.mixer.init()
     pygame.mixer.music.load('mp3/countdown.mp3')
     pygame.mixer.music.play(1)
@@ -193,11 +221,10 @@ def shutter():
     frame = cv2.flip(frame, 1)
     cv2.imwrite(".\\" + path,frame)
     print("\n" + path + "を撮影しました。")
-    confedit("q2,0,")
+    confedit("q2,0,0,")
     shutterflag = 1
 
     cv2.imwrite("out.png", mask.gb_crop(path))
-    gbimg = cv2.imread("out.png", -1)
     menu2()
 
 def ifshutter():
@@ -206,7 +233,7 @@ def ifshutter():
         time.sleep(0.05)
         readconf()
         try:
-            if (disp_conf[1] == "1" and disp_conf[0] == "q1" and shutterflag == 1):
+            if (disp_conf[1] == "1" and (disp_conf[0] == "q1" or disp_conf[0] == "1") and shutterflag == 1):
                 shutterflag = 0
                 th2 = threading.Thread(target=shutter)
                 th2.start()
@@ -220,17 +247,12 @@ scenesetup()
 shutterflag = 1
 ths = threading.Thread(target=ifshutter)
 ths.start()
-while True:
 
+
+while True:
     readconf()
     menu()
     anime()
-    # if (msvcrt.kbhit()):#linuxでうごかない？
-    #     keyevent = ord(msvcrt.getch())+shutterflag
-    #     if (keyevent == 14):
-    #         shutterflag = 0
-    #         th2 = threading.Thread(target=shutter)
-    #         th2.start()
 
 
 cap.release()
