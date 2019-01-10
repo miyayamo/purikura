@@ -1,3 +1,4 @@
+#conf[menu, shutter, gbselect, print]
 #python -m pip install opencv-python
 #python -m pip install opencv-contrib-python
 #python -m pip install -U pygame --user
@@ -20,8 +21,9 @@ if (cap.isOpened() is False):
     print("can not open camera")
     sys.exit()
 
-def img_print(path):
-    subprocess.run("mspaint {} /p".format(path))
+def img_print(maskedpath):
+    subprocess.run("mspaint {} /p".format(maskedpath))
+    print("印刷：".format(maskedpath))
 
 def add_alpha(data):
     rgba = cv2.cvtColor(data, cv2.COLOR_RGB2RGBA)
@@ -44,7 +46,7 @@ def add2(bg):
     time.sleep(0.5)#帰れた！！！！
     img1 = cv2.imread("bg{}.png".format(str(bg).zfill(2)), -1)
     img2 = cv2.imread("out.png", -1)
-    print("bg{}.png".format(str(bg).zfill(2)))
+    print("選択：bg{}".format(str(bg).zfill(2)))
 
     amask = img2[:,:,3]
     amask_inv = cv2.bitwise_not(amask)
@@ -54,7 +56,7 @@ def add2(bg):
 
     background = cv2.add(img1_bg,img2_fg)
     background = add_alpha(background)
-    cv2.imwrite("masked.png", background)
+    cv2.imwrite("masked/" + path[6:-3] + "png", background)
 
 def confedit(text):
     f = open("disp.conf", "w")
@@ -63,7 +65,7 @@ def confedit(text):
 
 def scenesetup():
     global frame
-    confedit("q1,1,0,")
+    confedit("q1,1,0,0,")
     ret, frame = cap.read()#反転させるには「cv2.flip(img, 1)」
     frame = cv2.flip(frame, 1)
 
@@ -78,20 +80,25 @@ def menu1():
 
 addflag = False
 addbg = 1
+takeflag = True
 def menu2():
     global background, foreground, frame, addflag, addbg
+    if(disp_conf[3] == "1"):
+        img_print("masked\\" + path[6:-3] + "png")
+        confedit("q2,0,0,0,")
     if(disp_conf[2] != "0"):
         addbg = addbg + int(disp_conf[2])
         addflag = False
-    confedit("q2,0,0,")
-    if(addflag == False):
-        add2(addbg)
-        addflag = True
-    else:
-        background = cv2.imread("masked.png", -1)
+    confedit("q2,0,0,0,")
+    if(takeflag == False):
+        if(addflag == False):
+            add2(addbg)
+            addflag = True
+        else:
+            background = cv2.imread("masked/" + path[6:-3] + "png", -1)
 
     foreground = cv2.imread('img/button2.png', -1)#30,570 230x690
-    add(foreground, background, 190, 570)
+    add(foreground, background, 190, 570)#error 二回目の撮影でbackgroundがおかしくなる
     foreground = cv2.imread('img/button3.png', -1)#730,570 930x690
     add(foreground, background, 880, 570)
     foreground = cv2.imread('img/button4.png', -1)#30,300 150,420
@@ -102,9 +109,6 @@ def menu2():
 
 def menu3():
     global background, foreground, frame
-    ret, frame = cap.read()
-    frame = cv2.flip(frame, 1)
-    background = add_alpha(frame)
     foreground = cv2.imread('img/button6.png', -1)#730,570 930x690
     add(foreground, background, 190, 570)
     foreground = cv2.imread('img/button7.png', -1)#30,570 230x690
@@ -208,7 +212,7 @@ def flash():
     cv2.imshow("webcam", frame)
 
 def shutter():
-    global shutterflag, frame
+    global shutterflag, frame, path
     pygame.mixer.init()
     pygame.mixer.music.load('mp3/countdown.mp3')
     pygame.mixer.music.play(1)
@@ -220,9 +224,10 @@ def shutter():
     ret, frame = cap.read()
     frame = cv2.flip(frame, 1)
     cv2.imwrite(".\\" + path,frame)
-    print("\n" + path + "を撮影しました。")
-    confedit("q2,0,0,")
+    print("撮影：{}".format(path))
+    confedit("q2,0,0,0,")
     shutterflag = 1
+    takeflag = False
 
     cv2.imwrite("out.png", mask.gb_crop(path))
     menu2()
@@ -237,11 +242,8 @@ def ifshutter():
                 shutterflag = 0
                 th2 = threading.Thread(target=shutter)
                 th2.start()
-            else:
-                print("\r{}".format("撮影待機中"), end="")
         except:
-            f = open("error", "w")
-            f.close()
+            print("\r")
 
 scenesetup()
 shutterflag = 1
