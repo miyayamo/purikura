@@ -6,6 +6,7 @@
 import cv2, sys, datetime, msvcrt, time, pygame, threading, subprocess, numpy as np
 import mask
 from PIL import Image
+
 if(cv2.VideoCapture(0).isOpened() is True):
     cap = cv2.VideoCapture(0)
 if(cv2.VideoCapture(1).isOpened() is True):
@@ -43,8 +44,8 @@ def add(fg, bg, x, y):
 
 def add2(bg):
     global background
-    time.sleep(0.5)#帰れた！！！！
-    img1 = cv2.imread("bg{}.png".format(str(bg).zfill(2)), -1)
+    time.sleep(0.5)
+    img1 = cv2.imread("bg/bg{}.png".format(str(bg).zfill(2)), -1)
     img2 = cv2.imread("out.png", -1)
     print("選択：bg{}".format(str(bg).zfill(2)))
 
@@ -56,7 +57,7 @@ def add2(bg):
 
     background = cv2.add(img1_bg,img2_fg)
     background = add_alpha(background)
-    cv2.imwrite("masked/" + path[6:-3] + "png", background)
+    cv2.imwrite("masked/" + path[6:], background)#ここでうまく書き込めないのが原因
 
 def confedit(text):
     f = open("disp.conf", "w")
@@ -80,25 +81,21 @@ def menu1():
 
 addflag = False
 addbg = 1
-takeflag = True
-def menu2():
+def menu2():#二回目の撮影でbackgroundがおかしくなる
     global background, foreground, frame, addflag, addbg
-    if(disp_conf[3] == "1"):
-        img_print("masked\\" + path[6:-3] + "png")
-        confedit("q2,0,0,0,")
+    background = cv2.imread("out.png", -1)
     if(disp_conf[2] != "0"):
         addbg = addbg + int(disp_conf[2])
         addflag = False
-    confedit("q2,0,0,0,")
-    if(takeflag == False):
-        if(addflag == False):
-            add2(addbg)
-            addflag = True
-        else:
-            background = cv2.imread("masked/" + path[6:-3] + "png", -1)
+        confedit("q2,0,0,0,")
+    if(addflag == False):
+        add2(addbg)
+        addflag = True
+    else:
+        background = cv2.imread("masked/" + path[6:], -1)
 
-    foreground = cv2.imread('img/button2.png', -1)#30,570 230x690
-    add(foreground, background, 190, 570)#error 二回目の撮影でbackgroundがおかしくなる
+    # foreground = cv2.imread('img/button2.png', -1)#30,570 230x690
+    # add(foreground, background, 190, 570)
     foreground = cv2.imread('img/button3.png', -1)#730,570 930x690
     add(foreground, background, 880, 570)
     foreground = cv2.imread('img/button4.png', -1)#30,300 150,420
@@ -109,6 +106,10 @@ def menu2():
 
 def menu3():
     global background, foreground, frame
+    background = cv2.imread("masked/" + path[6:], -1)
+    if(disp_conf[3] == "1"):
+        img_print("masked\\" + path[6:])
+        confedit("q3,0,0,0,")
     foreground = cv2.imread('img/button6.png', -1)#730,570 930x690
     add(foreground, background, 190, 570)
     foreground = cv2.imread('img/button7.png', -1)#30,570 230x690
@@ -202,7 +203,7 @@ def anime():
         ret, frame = cap.read()
         frame = cv2.flip(frame, 1)
 
-flashimg = cv2.imread("flash.png")
+flashimg = cv2.imread("img/flash.png")
 def flash():
     # time.sleep(3.3)
     global cap, flashimg
@@ -214,22 +215,23 @@ def flash():
 def shutter():
     global shutterflag, frame, path
     pygame.mixer.init()
-    pygame.mixer.music.load('mp3/countdown.mp3')
+    pygame.mixer.music.load('img/countdown.mp3')
     pygame.mixer.music.play(1)
     time.sleep(3.4)
     flash()
     time.sleep(0.1)
     pygame.mixer.music.stop()
-    path = "photo/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".jpg"
+    path = "photo/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".png"
     ret, frame = cap.read()
     frame = cv2.flip(frame, 1)
     cv2.imwrite(".\\" + path,frame)
     print("撮影：{}".format(path))
     confedit("q2,0,0,0,")
     shutterflag = 1
-    takeflag = False
+    addflag = False
 
     cv2.imwrite("out.png", mask.gb_crop(path))
+
     menu2()
 
 def ifshutter():
@@ -240,6 +242,7 @@ def ifshutter():
         try:
             if (disp_conf[1] == "1" and (disp_conf[0] == "q1" or disp_conf[0] == "1") and shutterflag == 1):
                 shutterflag = 0
+
                 th2 = threading.Thread(target=shutter)
                 th2.start()
         except:
