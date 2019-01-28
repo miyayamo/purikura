@@ -21,6 +21,25 @@ if (cap.isOpened() is False):
     print("can not open camera")
     sys.exit()
 
+
+def addpointer(x, y):
+    img_po = cv2.circle(background, (x, y), 25, (255, 255, 0, 0), -1)
+    return img_po
+
+def readpointconf():
+    global point_conf
+    f = open("point.conf", "r")
+    point_conf = f.read().split(",")
+    f.close()
+
+def poswrite():
+    try:
+        readpointconf()
+        background = addpointer(int(point_conf[0]), int(point_conf[1]))
+        print (point_conf)
+    except Exception as e:
+        print (e, 'error occurred')
+
 def img_print(maskedpath):
     subprocess.run("mspaint {} /p".format(maskedpath))
     print("印刷：".format(maskedpath))
@@ -76,6 +95,7 @@ def menu1():
     background = add_alpha(frame)
     foreground = cv2.imread('img/button1.png', -1)#730,570 930x690
     add(foreground, background, 880, 570)
+    poswrite()
     frame = background
 
 addflag = False
@@ -101,6 +121,7 @@ def menu2():#二回目の撮影でbackgroundがおかしくなる※ここが原
     add(foreground, background, 190, 300)
     foreground = cv2.imread('img/button5.png', -1)#810,300 930,420
     add(foreground, background, 960, 300)
+    poswrite()
     frame = background
 
 def menu3():
@@ -113,6 +134,7 @@ def menu3():
     add(foreground, background, 190, 570)
     foreground = cv2.imread('img/button7.png', -1)#30,570 230x690
     add(foreground, background, 880, 570)
+    poswrite()
     frame = background
 
 def menu():
