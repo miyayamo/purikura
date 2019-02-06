@@ -14,7 +14,7 @@ if(cv2.VideoCapture(1).isOpened() is True):
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FPS, 60)
-cv2.namedWindow("webcam", cv2.WINDOW_NORMAL)
+cv2.namedWindow("webcam", cv2.WINDOW_KEEPRATIO | cv2.WINDOW_NORMAL)
 cv2.setWindowProperty("webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 if (cap.isOpened() is False):
@@ -28,21 +28,77 @@ def addpointer(x, y):
 
 def readpointconf():
     global point_conf
-    f = open("point.conf", "r")
+    f = open("../purikura-master/point.conf", "r")
     point_conf = f.read().split(",")
     f.close()
 
-def poswrite():
+menuflag = True
+def poswrite():#各メニューをがんばろう #countがなんか0になる※
+    global menuflag, count
+    readconf()
     try:
         readpointconf()
-        background = addpointer(int(point_conf[0]), int(point_conf[1]))
-        print (point_conf)
+        print("\n{}_{}".format(count, menuflag), end="")
+        pox = int(point_conf[0])
+        poy = int(point_conf[1])
+        background = addpointer(pox, poy)
+        if(disp_conf[0] == "q1" and menuflag == True):#menu1
+            if(pox > 730 and poy > 570 and pox < 930 and poy < 690):
+
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q1,1,0,0,")
+        if(disp_conf[0] == "q2" and menuflag == True):#menu2
+            if(pox > 30 and poy > 570 and pox < 230 and poy < 690):
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q1,0,0,0,")
+            elif(pox > 730 and poy > 570 and pox < 930 and poy < 690):
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q3,0,0,0,")
+            elif(pox > 30 and poy > 300 and pox < 150 and poy < 420):
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q2,0,-1,0,")
+            elif(pox > 810 and poy > 300 and pox < 930 and poy < 420):
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q2,0,1,0,")
+        if(disp_conf[0] == "q3" and menuflag == True):#menu6
+            if(pox > 30 and poy > 570 and pox < 230 and poy < 690):
+
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q3,0,0,1,")
+        if(disp_conf[0] == "q3" and menuflag == True):#menu7
+            if(pox > 730 and poy > 570 and pox < 930 and poy < 690):
+
+                count+=1
+                if(count>=30):
+                    count=0;
+                    menuflag = False
+                    confedit("q1,0,0,0,")
+
     except Exception as e:
         print (e, 'error occurred')
 
 def img_print(maskedpath):
     subprocess.run("mspaint {} /p".format(maskedpath))
     print("印刷：".format(maskedpath))
+    menuflag = True
 
 def add_alpha(data):
     rgba = cv2.cvtColor(data, cv2.COLOR_RGB2RGBA)
@@ -61,7 +117,7 @@ def add(fg, bg, x, y):
     background = bg
 
 def add2(bg):
-    global background
+    global background, path, menuflag
     time.sleep(0.5)
     img1 = cv2.imread("bg/bg{}.png".format(str(bg).zfill(2)), -1)
     img2 = cv2.imread("out.png", -1)
@@ -75,7 +131,8 @@ def add2(bg):
 
     background = cv2.add(img1_bg,img2_fg)
     background = add_alpha(background)
-    cv2.imwrite("masked/" + path[6:], background)#ここでうまく書き込めないのが原因
+    cv2.imwrite("masked/" + path[6:], background)
+    menuflag = True
 
 def confedit(text):
     f = open("disp.conf", "w")
@@ -84,16 +141,16 @@ def confedit(text):
 
 def scenesetup():
     global frame
-    confedit("q1,1,0,0,")
+    confedit("q1,0,0,0,")
     ret, frame = cap.read()#反転させるには「cv2.flip(img, 1)」
     frame = cv2.flip(frame, 1)
 
 def menu1():
-    global background, foreground, frame
+    global background, foreground, frame, menuflag
     ret, frame = cap.read()
     frame = cv2.flip(frame, 1)
     background = add_alpha(frame)
-    foreground = cv2.imread('img/button1.png', -1)#730,570 930x690
+    foreground = cv2.imread('img/button1.png', -1)#730,570 930,690
     add(foreground, background, 880, 570)
     poswrite()
     frame = background
@@ -110,12 +167,13 @@ def menu2():#二回目の撮影でbackgroundがおかしくなる※ここが原
     if(addflag == False):
         add2(addbg)
         addflag = True
+        background = cv2.imread("masked/" + path[6:], -1)
     else:
         background = cv2.imread("masked/" + path[6:], -1)
 
-    # foreground = cv2.imread('img/button2.png', -1)#30,570 230x690
-    # add(foreground, background, 190, 570)
-    foreground = cv2.imread('img/button3.png', -1)#730,570 930x690
+    foreground = cv2.imread('img/button2.png', -1)#30,570 230,690
+    add(foreground, background, 190, 570)
+    foreground = cv2.imread('img/button3.png', -1)#730,570 930,690
     add(foreground, background, 880, 570)
     foreground = cv2.imread('img/button4.png', -1)#30,300 150,420
     add(foreground, background, 190, 300)
@@ -125,22 +183,25 @@ def menu2():#二回目の撮影でbackgroundがおかしくなる※ここが原
     frame = background
 
 def menu3():
-    global background, foreground, frame
+    global background, foreground, frame, path, menuflag
     background = cv2.imread("masked/" + path[6:], -1)
     if(disp_conf[3] == "1"):
         img_print("masked\\" + path[6:])
         confedit("q3,0,0,0,")
-    foreground = cv2.imread('img/button6.png', -1)#730,570 930x690
+    foreground = cv2.imread('img/button6.png', -1)#730,570 930,690
     add(foreground, background, 190, 570)
-    foreground = cv2.imread('img/button7.png', -1)#30,570 230x690
+    foreground = cv2.imread('img/button7.png', -1)#30,570 230,690
     add(foreground, background, 880, 570)
     poswrite()
     frame = background
 
 def menu():
-    global background, foreground, frame
+    global background, foreground, frame, path
+
     if (disp_conf[0] == "0"):
         ret, frame = cap.read()
+        size = (1280, 720)
+        frame = cv2.resize(frame, size)
         frame = cv2.flip(frame, 1)
     elif (disp_conf[0] == "q1"):
         menu1()
@@ -234,7 +295,8 @@ def flash():
     cv2.imshow("webcam", frame)
 
 def shutter():
-    global shutterflag, frame, path
+    global shutterflag, frame, path, menuflag
+    path = "photo/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".png"
     pygame.mixer.init()
     pygame.mixer.music.load('img/countdown.mp3')
     pygame.mixer.music.play(1)
@@ -242,18 +304,20 @@ def shutter():
     flash()
     time.sleep(0.1)
     pygame.mixer.music.stop()
-    path = "photo/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".png"
+    # path = "photo/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".png"
     ret, frame = cap.read()
     frame = cv2.flip(frame, 1)
+    frame = add_alpha(frame)
     cv2.imwrite(".\\" + path,frame)
+    cv2.imwrite("./masked/" + path[6:], frame)
     print("撮影：{}".format(path))
+    menuflag = True
     confedit("q2,0,0,0,")
     shutterflag = 1
     addflag = False
 
     cv2.imwrite("out.png", gb_crop(path))
 
-    menu2()
 
 def ifshutter():
     global shutterflag
@@ -301,7 +365,7 @@ scenesetup()
 shutterflag = 1
 ths = threading.Thread(target=ifshutter)
 ths.start()
-
+count = 0
 
 while True:
     readconf()
